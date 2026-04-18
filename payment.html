@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pakistan AR Guide — Secure Checkout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --emerald: #1a6b4a;
+      --emerald-light: #2d9c6e;
+      --emerald-dark: #0f4530;
+      --gold: #c9972c;
+      --gold-light: #e8b84b;
+      --cream: #fdf8f0;
+      --ink: #1a1a1a;
+      --muted: #6b6b6b;
+      --border: #e0d9cc;
+      --card-bg: #ffffff;
+      --error: #c0392b;
+      --success: #1a6b4a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      min-height: 100vh;
+      color: var(--ink);
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      background: var(--emerald-dark);
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 18px;
+    }
+    header .brand {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      font-size: 1.2rem;
+      letter-spacing: 0.02em;
+    }
+    header .brand span { color: var(--gold-light); }
+    .secure-badge {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+    }
+    .secure-badge::before {
+      content: '🔒'; font-size: 14px;
+    }
+
+    /* ─── LAYOUT ─── */
+    .checkout-wrapper {
+      max-width: 960px;
+      margin: 48px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* ─── STEPS ─── */
+    .steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      padding: 8px 0;
+      flex: 1;
+      position: relative;
+    }
+    .step::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 50%;
+      width: 60%; height: 1px;
+      background: var(--border);
+      transform: translateY(-50%);
+    }
+    .step:last-child::after { display: none; }
+    .step.active { color: var(--emerald); }
+    .step.done { color: var(--gold); }
+    .step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      display: grid; place-items: center;
+      font-size: 0.75rem; font-weight: 600;
+      flex-shrink: 0;
+    }
+    .step.active .step-num { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+    .step.done .step-num { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      padding: 22px 28px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .card-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; font-weight: 700;
+      color: var(--emerald-dark);
+    }
+    .card-body { padding: 28px; }
+
+    /* ─── PAYMENT METHOD TABS ─── */
+    .method-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .method-tab {
+      flex: 1; min-width: 100px;
+      padding: 12px 10px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+    }
+    .method-tab:hover { border-color: var(--emerald-light); }
+    .method-tab.active {
+      border-color: var(--emerald);
+      background: #f0f9f5;
+    }
+    .method-tab .tab-icon { font-size: 22px; }
+    .method-tab .tab-label { font-size: 0.75rem; font-weight: 600; color: var(--ink); }
+    .method-tab.active .tab-label { color: var(--emerald); }
+
+    /* ─── FORM ─── */
+    .form-section { margin-bottom: 24px; }
+    .form-section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .form-row { display: grid; gap: 14px; }
+    .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .form-row.cols-3 { grid-template-columns: 2fr 1fr 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .form-group input, .form-group select {
+      height: 46px;
+      border: 1.5px solid var(--border);
+      border-radius: 9px;
+      padding: 0 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      color: var(--ink);
+      background: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 3px rgba(26,107,74,0.12);
+    }
+    .form-group input.error { border-color: var(--error); }
+    .form-group .error-msg {
+      font-size: 0.75rem;
+      color: var(--error);
+      display: none;
+    }
+    .form-group.has-error .error-msg { display: block; }
+
+    /* Card number with icon */
+    .card-input-wrap {
+      position: relative;
+    }
+    .card-input-wrap input {
+      padding-right: 60px;
+      letter-spacing: 0.08em;
+    }
+    .card-brand-icon {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      opacity: 0.7;
+    }
+
+    /* ─── EASYPAISA / JAZZCASH ─── */
+    .wallet-panel {
+      display: none;
+      padding: 20px;
+      background: #f8fffe;
+      border: 1.5px solid var(--emerald-light);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      animation: fadeIn 0.3s ease;
+    }
+    .wallet-panel.visible { display: block; }
+    .wallet-panel p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.6;
+    }
+
+    /* ─── BANK TRANSFER ─── */
+    .bank-panel {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .bank-panel.visible { display: block; }
+    .bank-info-box {
+      background: #fffbf0;
+      border: 1.5px solid var(--gold);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+    .bank-info-box .bank-row {
+      display: flex; justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(201,151,44,0.2);
+      font-size: 0.85rem;
+    }
+    .bank-info-box .bank-row:last-child { border-bottom: none; }
+    .bank-info-box .bank-row .label { color: var(--muted); }
+    .bank-info-box .bank-row .value { font-weight: 600; color: var(--ink); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ─── PAY BUTTON ─── */
+    .pay-btn {
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-light));
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.25s;
+      letter-spacing: 0.02em;
+      position: relative;
+      overflow: hidden;
+    }
+    .pay-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(26,107,74,0.35); }
+    .pay-btn:active { transform: translateY(0); }
+    .pay-btn.loading { pointer-events: none; opacity: 0.8; }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .pay-btn.loading .spinner { display: block; }
+    .pay-btn.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .trust-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    /* ─── ORDER SUMMARY ─── */
+    .order-card { position: sticky; top: 24px; }
+    .order-card .card-header { background: var(--emerald-dark); }
+    .order-card .card-header h2 { color: #fff; }
+    .order-card .card-header .header-icon { font-size: 18px; }
+
+    .booking-item {
+      display: flex; gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .booking-item:last-of-type { border-bottom: none; }
+    .booking-thumb {
+      width: 62px; height: 62px;
+      border-radius: 10px;
+      overflow: hidden; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--emerald-light), var(--emerald-dark));
+      display: grid; place-items: center;
+      font-size: 26px;
+    }
+    .booking-info { flex: 1; }
+    .booking-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .booking-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .booking-price {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--emerald-dark);
+      white-space: nowrap;
+    }
+
+    .price-breakdown {
+      padding: 16px 0;
+    }
+    .price-row {
+      display: flex; justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 0.86rem;
+    }
+    .price-row .plabel { color: var(--muted); }
+    .price-row .pval { font-weight: 500; }
+    .price-row.discount .pval { color: var(--error); }
+    .price-row.total {
+      border-top: 2px solid var(--border);
+      margin-top: 8px;
+      padding-top: 14px;
+    }
+    .price-row.total .plabel {
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 0.95rem;
+    }
+    .price-row.total .pval {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--emerald-dark);
+    }
+
+    .promo-row {
+      display: flex; gap: 8px;
+      margin: 16px 0;
+    }
+    .promo-input {
+      flex: 1;
+      height: 40px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .promo-input:focus { border-color: var(--emerald); }
+    .promo-btn {
+      height: 40px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--emerald-dark);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .promo-btn:hover { background: var(--emerald); }
+    .promo-msg { font-size: 0.78rem; margin-top: 4px; display: none; }
+    .promo-msg.success { color: var(--success); display: block; }
+    .promo-msg.error-promo { color: var(--error); display: block; }
+
+    /* ─── SUCCESS OVERLAY ─── */
+    .success-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,69,48,0.85);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      place-items: center;
+    }
+    .success-overlay.visible { display: grid; }
+    .success-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 50px 44px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    .success-check {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--emerald), var(--emerald-light));
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 34px;
+      margin: 0 auto 20px;
+    }
+    .success-box h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--emerald-dark);
+      margin-bottom: 10px;
+    }
+    .success-box p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .success-ref {
+      background: #f0f9f5;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 0.82rem;
+      color: var(--emerald-dark);
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+    .success-close {
+      width: 100%;
+      height: 46px;
+      background: var(--emerald);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    @media (max-width: 720px) {
+      .checkout-wrapper { grid-template-columns: 1fr; }
+      .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
+      .order-card { order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🇵🇰</div>
+  <span class="brand">Pakistan <span>AR Guide</span></span>
+  <div class="secure-badge">SECURE CHECKOUT</div>
+</header>
+
+<!-- Steps -->
+<div style="max-width:960px;margin:24px auto 0;padding:0 20px">
+  <div class="steps">
+    <div class="step done">
+      <div class="step-num">✓</div>
+      <span>Package</span>
+    </div>
+    <div class="step done">
+      <div class="step-num">✓</div>
+      <span>Details</span>
+    </div>
+    <div class="step active">
+      <div class="step-num">3</div>
+      <span>Payment</span>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <span>Confirm</span>
+    </div>
+  </div>
+</div>
+
+<div class="checkout-wrapper">
+
+  <!-- LEFT: Payment Form -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <span style="font-size:20px">💳</span>
+        <h2>Payment Method</h2>
+      </div>
+      <div class="card-body">
+
+        <!-- Method Tabs -->
+        <div class="method-tabs">
+          <button class="method-tab active" onclick="switchMethod('card', this)">
+            <span class="tab-icon">💳</span>
+            <span class="tab-label">Card</span>
+          </button>
+          <button class="method-tab" onclick="switchMethod('easypaisa', this)">
+            <span class="tab-icon">📱</span>
+            <span class="tab-label">Easypaisa</span>
+          </button>
+          <button class="method-tab" onclick="switchMethod('jazzcash', this)">
+            <span class="tab-icon">💜</span>
+            <span class="tab-label">JazzCash</span>
+          </button>
+          <button class="method-tab" onclick="switchMethod('bank', this)">
+            <span class="tab-icon">🏦</span>
+            <span class="tab-label">Bank Transfer</span>
+          </button>
+        </div>
+
+        <!-- ── CARD PANEL ── -->
+        <div id="panel-card">
+          <div class="form-section">
+            <div class="form-section-title">Cardholder</div>
+            <div class="form-row">
+              <div class="form-group" id="fg-name">
+                <label>Full Name on Card</label>
+                <input type="text" id="card-name" placeholder="e.g. Ahmed Hassan" oninput="clearError('fg-name')"/>
+                <span class="error-msg">Please enter the cardholder name</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Card Details</div>
+            <div class="form-row" style="margin-bottom:14px">
+              <div class="form-group" id="fg-number">
+                <label>Card Number</label>
+                <div class="card-input-wrap">
+                  <input type="text" id="card-number" placeholder="0000  0000  0000  0000" maxlength="19"
+                    oninput="formatCardNumber(this); detectBrand(this); clearError('fg-number')"/>
+                  <span class="card-brand-icon" id="card-brand-icon">💳</span>
+                </div>
+                <span class="error-msg">Enter a valid 16-digit card number</span>
+              </div>
+            </div>
+            <div class="form-row cols-3">
+              <div class="form-group" id="fg-expiry">
+                <label>Expiry Date</label>
+                <input type="text" id="card-expiry" placeholder="MM / YY" maxlength="7"
+                  oninput="formatExpiry(this); clearError('fg-expiry')"/>
+                <span class="error-msg">Invalid expiry date</span>
+              </div>
+              <div class="form-group" id="fg-cvv">
+                <label>CVV</label>
+                <input type="password" id="card-cvv" placeholder="•••" maxlength="4"
+                  oninput="clearError('fg-cvv')"/>
+                <span class="error-msg">Enter CVV</span>
+              </div>
+              <div class="form-group">
+                <label>Currency</label>
+                <select id="currency">
+                  <option value="PKR">PKR 🇵🇰</option>
+                  <option value="USD">USD 🇺🇸</option>
+                  <option value="EUR">EUR 🇪🇺</option>
+                  <option value="GBP">GBP 🇬🇧</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Billing Address</div>
+            <div class="form-row cols-2" style="margin-bottom:14px">
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" id="billing-city" placeholder="Lahore"/>
+              </div>
+              <div class="form-group">
+                <label>Country</label>
+                <select id="billing-country">
+                  <option>Pakistan</option>
+                  <option>United Kingdom</option>
+                  <option>United States</option>
+                  <option>UAE</option>
+                  <option>Saudi Arabia</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── EASYPAISA PANEL ── -->
+        <div class="wallet-panel" id="panel-easypaisa">
+          <p>Enter your <strong>Easypaisa registered mobile number</strong>. A payment request will be sent to your Easypaisa app for approval.</p>
+          <div class="form-group" id="fg-ep-phone">
+            <label>Easypaisa Mobile Number</label>
+            <input type="tel" id="ep-phone" placeholder="03XX XXXXXXX" maxlength="12"
+              oninput="formatPhone(this); clearError('fg-ep-phone')"/>
+            <span class="error-msg">Enter a valid Pakistani mobile number</span>
+          </div>
+          <p style="margin-top:14px;font-size:0.78rem;">✅ Instant confirmation &nbsp;|&nbsp; ✅ No card required &nbsp;|&nbsp; ✅ Secure OTP verification</p>
+        </div>
+
+        <!-- ── JAZZCASH PANEL ── -->
+        <div class="wallet-panel" id="panel-jazzcash">
+          <p>Enter your <strong>JazzCash registered mobile number</strong>. You'll receive a confirmation PIN on your phone to authorize the payment.</p>
+          <div class="form-group" id="fg-jc-phone">
+            <label>JazzCash Mobile Number</label>
+            <input type="tel" id="jc-phone" placeholder="03XX XXXXXXX" maxlength="12"
+              oninput="formatPhone(this); clearError('fg-jc-phone')"/>
+            <span class="error-msg">Enter a valid Pakistani mobile number</span>
+          </div>
+          <div class="form-group" style="margin-top:14px" id="fg-jc-pin">
+            <label>JazzCash MPIN</label>
+            <input type="password" id="jc-pin" placeholder="Enter your 4–6 digit MPIN" maxlength="6"
+              oninput="clearError('fg-jc-pin')"/>
+            <span class="error-msg">Enter your JazzCash MPIN</span>
+          </div>
+        </div>
+
+        <!-- ── BANK TRANSFER PANEL ── -->
+        <div class="bank-panel" id="panel-bank">
+          <div class="bank-info-box">
+            <div class="bank-row"><span class="label">Bank Name</span><span class="value">HBL Bank</span></div>
+            <div class="bank-row"><span class="label">Account Title</span><span class="value">Pakistan AR Guide (Pvt)</span></div>
+            <div class="bank-row"><span class="label">Account No.</span><span class="value">0123-4567890-001</span></div>
+            <div class="bank-row"><span class="label">IBAN</span><span class="value">PK36HABB0000123456789001</span></div>
+            <div class="bank-row"><span class="label">Branch Code</span><span class="value">0123</span></div>
+          </div>
+          <div class="form-group" id="fg-txn">
+            <label>Transaction / Reference Number</label>
+            <input type="text" id="bank-txn" placeholder="Enter your bank transaction ID"
+              oninput="clearError('fg-txn')"/>
+            <span class="error-msg">Please enter your transaction reference number</span>
+          </div>
+          <p style="margin-top:12px;font-size:0.78rem;color:var(--muted);">
+            ⚠️ Transfer the exact amount and enter your transaction ID above. Booking will be confirmed within <strong>2–4 hours</strong> after verification.
+          </p>
+        </div>
+
+        <!-- Pay Button -->
+        <button class="pay-btn" id="payBtn" onclick="processPayment()">
+          <span class="btn-text">🔒 Pay PKR 25,000</span>
+          <div class="spinner"></div>
+        </button>
+
+        <div class="trust-row">
+          <div class="trust-item">🔒 SSL Encrypted</div>
+          <div class="trust-item">🛡️ PCI DSS Compliant</div>
+          <div class="trust-item">↩️ Easy Refunds</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Order Summary -->
+  <div class="order-card">
+    <div class="card">
+      <div class="card-header" style="background:var(--emerald-dark)">
+        <span class="header-icon">🧾</span>
+        <h2 style="color:#fff">Order Summary</h2>
+      </div>
+      <div class="card-body">
+
+        <div class="booking-item">
+          <div class="booking-thumb">🏔️</div>
+          <div class="booking-info">
+            <div class="booking-name">Hunza Valley AR Tour</div>
+            <div class="booking-meta">
+              📅 May 15–20, 2025<br>
+              👥 2 Adults · Guide Included<br>
+              ⭐ Premium Package
+            </div>
+          </div>
+          <div class="booking-price">PKR 18,000</div>
+        </div>
+
+        <div class="booking-item">
+          <div class="booking-thumb">🕌</div>
+          <div class="booking-info">
+            <div class="booking-name">Lahore Heritage Walk</div>
+            <div class="booking-meta">
+              📅 May 22, 2025<br>
+              👥 2 Adults<br>
+              📱 AR Experience
+            </div>
+          </div>
+          <div class="booking-price">PKR 5,500</div>
+        </div>
+
+        <!-- Promo Code -->
+        <div class="promo-row">
+          <input type="text" class="promo-input" id="promo-input" placeholder="Promo code" />
+          <button class="promo-btn" onclick="applyPromo()">Apply</button>
+        </div>
+        <div class="promo-msg" id="promo-msg"></div>
+
+        <div class="price-breakdown">
+          <div class="price-row">
+            <span class="plabel">Subtotal</span>
+            <span class="pval">PKR 23,500</span>
+          </div>
+          <div class="price-row">
+            <span class="plabel">Service Fee (3%)</span>
+            <span class="pval">PKR 705</span>
+          </div>
+          <div class="price-row">
+            <span class="plabel">GST (17%)</span>
+            <span class="pval">PKR 795</span>
+          </div>
+          <div class="price-row discount" id="discount-row" style="display:none">
+            <span class="plabel">Promo Discount</span>
+            <span class="pval" id="discount-val">– PKR 0</span>
+          </div>
+          <div class="price-row total">
+            <span class="plabel">Total</span>
+            <span class="pval" id="total-val">PKR 25,000</span>
+          </div>
+        </div>
+
+        <p style="font-size:0.74rem;color:var(--muted);text-align:center;margin-top:8px;">
+          Prices include all taxes. Booking is non-refundable within 48hrs of tour date.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-check">✅</div>
+    <h2>Booking Confirmed!</h2>
+    <p>Your payment was processed successfully. A confirmation email has been sent to your registered address.</p>
+    <div class="success-ref" id="booking-ref">Booking Ref: PAK-AR-2025-####</div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:20px;">
+      Please screenshot this for your records.
+    </p>
+    <button class="success-close" onclick="closeSuccess()">Back to Dashboard</button>
+  </div>
+</div>
+
+<script>
+  let currentMethod = 'card';
+  const PROMOS = { 'PAKISTAN10': 10, 'TOURISM20': 20, 'FYPDEMO': 15 };
+  let discountPct = 0;
+  const BASE_TOTAL = 25000;
+
+  function switchMethod(method, btn) {
+    currentMethod = method;
+    document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Hide all panels
+    document.getElementById('panel-card').style.display = 'none';
+    document.querySelectorAll('.wallet-panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.bank-panel').forEach(p => p.classList.remove('visible'));
+
+    if (method === 'card') {
+      document.getElementById('panel-card').style.display = 'block';
+    } else if (method === 'easypaisa') {
+      document.getElementById('panel-easypaisa').classList.add('visible');
+    } else if (method === 'jazzcash') {
+      document.getElementById('panel-jazzcash').classList.add('visible');
+    } else if (method === 'bank') {
+      document.getElementById('panel-bank').classList.add('visible');
+    }
+  }
+
+  function formatCardNumber(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 16);
+    input.value = v.replace(/(.{4})/g, '$1  ').trim();
+  }
+
+  function formatExpiry(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 4);
+    if (v.length >= 3) v = v.substring(0, 2) + ' / ' + v.substring(2);
+    input.value = v;
+  }
+
+  function formatPhone(input) {
+    let v = input.value.replace(/\D/g, '').substring(0, 11);
+    input.value = v;
+  }
+
+  function detectBrand(input) {
+    const num = input.value.replace(/\D/g, '');
+    const icon = document.getElementById('card-brand-icon');
+    if (num.startsWith('4')) icon.textContent = '💙'; // Visa
+    else if (num.startsWith('5')) icon.textContent = '🟠'; // Mastercard
+    else if (num.startsWith('3')) icon.textContent = '💚'; // Amex
+    else icon.textContent = '💳';
+  }
+
+  function clearError(groupId) {
+    const g = document.getElementById(groupId);
+    if (g) { g.classList.remove('has-error'); g.querySelector('input')?.classList.remove('error'); }
+  }
+
+  function showError(groupId) {
+    const g = document.getElementById(groupId);
+    if (g) { g.classList.add('has-error'); g.querySelector('input')?.classList.add('error'); }
+  }
+
+  function validateCard() {
+    let ok = true;
+    const name = document.getElementById('card-name').value.trim();
+    const num = document.getElementById('card-number').value.replace(/\D/g,'');
+    const expiry = document.getElementById('card-expiry').value;
+    const cvv = document.getElementById('card-cvv').value;
+    if (!name) { showError('fg-name'); ok = false; }
+    if (num.length < 16) { showError('fg-number'); ok = false; }
+    if (expiry.length < 5) { showError('fg-expiry'); ok = false; }
+    if (cvv.length < 3) { showError('fg-cvv'); ok = false; }
+    return ok;
+  }
+
+  function validateWallet(prefix) {
+    let ok = true;
+    const phone = document.getElementById(prefix + '-phone').value.replace(/\D/g,'');
+    if (phone.length !== 11 || !phone.startsWith('03')) { showError('fg-' + prefix + '-phone'); ok = false; }
+    if (prefix === 'jc') {
+      const pin = document.getElementById('jc-pin').value;
+      if (pin.length < 4) { showError('fg-jc-pin'); ok = false; }
+    }
+    return ok;
+  }
+
+  function validateBank() {
+    const txn = document.getElementById('bank-txn').value.trim();
+    if (!txn) { showError('fg-txn'); return false; }
+    return true;
+  }
+
+  function processPayment() {
+    let valid = false;
+    if (currentMethod === 'card') valid = validateCard();
+    else if (currentMethod === 'easypaisa') valid = validateWallet('ep');
+    else if (currentMethod === 'jazzcash') valid = validateWallet('jc');
+    else if (currentMethod === 'bank') valid = validateBank();
+
+    if (!valid) return;
+
+    const btn = document.getElementById('payBtn');
+    btn.classList.add('loading');
+
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      const ref = 'PAK-AR-2025-' + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('booking-ref').textContent = 'Booking Ref: ' + ref;
+      document.getElementById('successOverlay').classList.add('visible');
+    }, 2500);
+  }
+
+  function applyPromo() {
+    const code = document.getElementById('promo-input').value.trim().toUpperCase();
+    const msg = document.getElementById('promo-msg');
+    msg.className = 'promo-msg';
+    msg.textContent = '';
+
+    if (PROMOS[code]) {
+      discountPct = PROMOS[code];
+      const disc = Math.round(BASE_TOTAL * discountPct / 100);
+      const newTotal = BASE_TOTAL - disc;
+      document.getElementById('discount-row').style.display = 'flex';
+      document.getElementById('discount-val').textContent = `– PKR ${disc.toLocaleString()}`;
+      document.getElementById('total-val').textContent = `PKR ${newTotal.toLocaleString()}`;
+      document.getElementById('payBtn').querySelector('.btn-text').textContent = `🔒 Pay PKR ${newTotal.toLocaleString()}`;
+      msg.className = 'promo-msg success';
+      msg.textContent = `✅ "${code}" applied — ${discountPct}% off!`;
+    } else {
+      msg.className = 'promo-msg error-promo';
+      msg.textContent = '❌ Invalid promo code';
+    }
+  }
+
+  function closeSuccess() {
+    document.getElementById('successOverlay').classList.remove('visible');
+  }
+
+  // Keyboard: Enter on promo = apply
+  document.getElementById('promo-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') applyPromo();
+  });
+</script>
+</body>
+</html>
